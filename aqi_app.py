@@ -3,15 +3,20 @@ import pandas as pd
 import requests
 import joblib
 import geocoder
+import os
+from dotenv import load_dotenv
+
+# 🔐 Load environment variables
+load_dotenv()
 
 # Load model
 model = joblib.load("aqi_model.pkl")
 
-# GEOAPIFY API KEY — replace with yours!
-GEOAPIFY_KEY = "d23e716ec9fc4d1b916945876cf09c3f"  # 🔑 paste your key here
-OPENWEATHER_KEY = "31d96a34816768477ca16ee86ff93ffc"  # Your OpenWeather API key
+# 🌐 API keys from environment
+GEOAPIFY_KEY = os.getenv("GEOAPIFY_API_KEY")
+OPENWEATHER_KEY = os.getenv("OPENWEATHER_API_KEY")
 
-# 📍 Fast Geocoding using Geoapify
+# 📍 Geocoding using Geoapify
 def get_coordinates(city_name):
     url = f"https://api.geoapify.com/v1/geocode/search?text={city_name}&apiKey={GEOAPIFY_KEY}"
     response = requests.get(url)
@@ -37,7 +42,7 @@ def get_location_ip():
         }
     return None
 
-# 🌦️ Weather data from OpenWeather
+# 🌦️ Get weather data
 def get_weather(lat, lon):
     url = f"https://api.openweathermap.org/data/2.5/weather?lat={lat}&lon={lon}&appid={OPENWEATHER_KEY}&units=metric"
     response = requests.get(url)
@@ -50,7 +55,7 @@ def get_weather(lat, lon):
         }
     return None
 
-# 📊 Predict PM2.5
+# 🧠 Predict PM2.5
 def predict_pm25(aod, temp, humidity, windspeed):
     input_df = pd.DataFrame([[aod, temp, humidity, windspeed]],
                             columns=["AOD", "Temperature", "Humidity", "WindSpeed"])
@@ -70,7 +75,7 @@ if method == "📝 Manual (Type a city)":
             if location:
                 weather = get_weather(location["latitude"], location["longitude"])
                 if weather:
-                    aod = 0.6  # Placeholder AOD for now
+                    aod = 0.6  # 🔧 Placeholder for AOD
                     prediction = predict_pm25(aod, weather["temperature"], weather["humidity"], weather["wind"])
                     st.success(f"📍 Location: {location['city']}")
                     st.markdown(f"### 💨 Predicted PM2.5: `{prediction:.2f} µg/m³`")
@@ -95,3 +100,4 @@ else:
                     st.error("❌ Weather data failed.")
             else:
                 st.error("❌ IP location not available.")
+
